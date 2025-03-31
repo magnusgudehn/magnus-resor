@@ -10,6 +10,7 @@ import { Trip, Booking } from '@/types';
 import { getTrip } from '@/utils/mockData';
 import { format } from 'date-fns';
 import { ChevronLeft, Calendar, MapPin } from 'lucide-react';
+import { toast } from 'sonner';
 
 const TripDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -28,6 +29,15 @@ const TripDetails = () => {
   
   const handleAddBooking = (newBooking: Booking) => {
     setBookings((prev) => [...prev, newBooking]);
+  };
+  
+  const handleUpdateBooking = (updatedBooking: Booking) => {
+    setBookings((prev) => 
+      prev.map((booking) => 
+        booking.id === updatedBooking.id ? updatedBooking : booking
+      )
+    );
+    toast.success("Booking updated successfully");
   };
   
   if (!trip) {
@@ -95,7 +105,11 @@ const TripDetails = () => {
             {sortedBookings.length > 0 ? (
               <div className="space-y-4">
                 {sortedBookings.map((booking) => (
-                  <BookingItem key={booking.id} booking={booking} />
+                  <BookingItem 
+                    key={booking.id} 
+                    booking={booking} 
+                    onBookingUpdate={handleUpdateBooking}
+                  />
                 ))}
               </div>
             ) : (
