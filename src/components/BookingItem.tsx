@@ -3,7 +3,7 @@ import React from 'react';
 import { Booking } from '@/types';
 import { format, parseISO } from 'date-fns';
 import { Plane, Hotel, Car, Calendar, MapPin, FileText, Edit, ArrowRight, Clock } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import EditBookingForm from './EditBookingForm';
 
 interface BookingItemProps {
@@ -201,6 +201,7 @@ const BookingItem: React.FC<BookingItemProps> = ({
           <DialogContent className="sm:max-w-[550px]">
             <DialogHeader>
               <DialogTitle>Edit Booking</DialogTitle>
+              <DialogDescription>Make changes to your booking here.</DialogDescription>
             </DialogHeader>
             <EditBookingForm 
               booking={booking} 

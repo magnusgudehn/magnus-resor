@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { DialogClose } from "@/components/ui/dialog";
+import { DialogClose, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/
 import { Booking, BookingType } from '@/types';
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, Clock } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -30,7 +30,9 @@ const formSchema = z.object({
   description: z.string().optional(),
   location: z.string().optional(),
   startDate: z.date(),
+  startTime: z.string().optional(),
   endDate: z.date().optional(),
+  endTime: z.string().optional(),
   confirmationNumber: z.string().optional(),
 });
 
@@ -42,12 +44,19 @@ interface EditBookingFormProps {
 }
 
 const EditBookingForm: React.FC<EditBookingFormProps> = ({ booking, onSave }) => {
-  const [startDate, setStartDate] = useState<Date | undefined>(
-    booking.startDate ? new Date(booking.startDate) : undefined
-  );
-  const [endDate, setEndDate] = useState<Date | undefined>(
-    booking.endDate ? new Date(booking.endDate) : undefined
-  );
+  // Parse dates and times from the booking
+  const startDate = booking.startDate ? new Date(booking.startDate) : new Date();
+  const endDate = booking.endDate ? new Date(booking.endDate) : undefined;
+  
+  // Extract time from dates if they exist
+  const getTimeFromDate = (dateString?: string): string => {
+    if (!dateString || !dateString.includes('T')) return '';
+    const date = new Date(dateString);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const startTime = getTimeFromDate(booking.startDate);
+  const endTime = getTimeFromDate(booking.endDate);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -57,20 +66,39 @@ const EditBookingForm: React.FC<EditBookingFormProps> = ({ booking, onSave }) =>
       description: booking.description || "",
       location: booking.location || "",
       startDate: startDate,
+      startTime: startTime,
       endDate: endDate,
+      endTime: endTime,
       confirmationNumber: booking.confirmationNumber || "",
     },
   });
 
   const onSubmit = (values: FormValues) => {
+    // Combine date and time for start date
+    let combinedStartDate = new Date(values.startDate);
+    if (values.startTime) {
+      const [hours, minutes] = values.startTime.split(':').map(Number);
+      combinedStartDate.setHours(hours || 0, minutes || 0);
+    }
+
+    // Combine date and time for end date if it exists
+    let combinedEndDate: Date | undefined = undefined;
+    if (values.endDate) {
+      combinedEndDate = new Date(values.endDate);
+      if (values.endTime) {
+        const [hours, minutes] = values.endTime.split(':').map(Number);
+        combinedEndDate.setHours(hours || 0, minutes || 0);
+      }
+    }
+
     const updatedBooking: Booking = {
       ...booking,
       type: values.type,
       title: values.title,
       description: values.description,
       location: values.location,
-      startDate: values.startDate.toISOString(),
-      endDate: values.endDate ? values.endDate.toISOString() : undefined,
+      startDate: combinedStartDate.toISOString(),
+      endDate: combinedEndDate ? combinedEndDate.toISOString() : undefined,
       confirmationNumber: values.confirmationNumber,
     };
     
@@ -148,10 +176,7 @@ const EditBookingForm: React.FC<EditBookingFormProps> = ({ booking, onSave }) =>
                     <Calendar
                       mode="single"
                       selected={field.value}
-                      onSelect={(date) => {
-                        field.onChange(date);
-                        setStartDate(date);
-                      }}
+                      onSelect={field.onChange}
                       initialFocus
                     />
                   </PopoverContent>
@@ -160,6 +185,28 @@ const EditBookingForm: React.FC<EditBookingFormProps> = ({ booking, onSave }) =>
             )}
           />
 
+          <FormField
+            control={form.control}
+            name="startTime"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Start Time</FormLabel>
+                <FormControl>
+                  <div className="flex items-center">
+                    <Clock className="mr-2 h-4 w-4 text-gray-400" />
+                    <Input
+                      type="time"
+                      placeholder="HH:MM"
+                      {...field}
+                    />
+                  </div>
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="endDate"
@@ -189,14 +236,31 @@ const EditBookingForm: React.FC<EditBookingFormProps> = ({ booking, onSave }) =>
                     <Calendar
                       mode="single"
                       selected={field.value}
-                      onSelect={(date) => {
-                        field.onChange(date);
-                        setEndDate(date);
-                      }}
+                      onSelect={field.onChange}
                       initialFocus
                     />
                   </PopoverContent>
                 </Popover>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="endTime"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>End Time</FormLabel>
+                <FormControl>
+                  <div className="flex items-center">
+                    <Clock className="mr-2 h-4 w-4 text-gray-400" />
+                    <Input
+                      type="time"
+                      placeholder="HH:MM"
+                      {...field}
+                    />
+                  </div>
+                </FormControl>
               </FormItem>
             )}
           />
