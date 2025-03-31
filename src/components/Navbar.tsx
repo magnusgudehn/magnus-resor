@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import CreateTripForm from './CreateTripForm';
 
 const Navbar: React.FC = () => {
   return (
@@ -16,10 +16,7 @@ const Navbar: React.FC = () => {
           <Button asChild variant="outline">
             <Link to="/">My Trips</Link>
           </Button>
-          <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            New Trip
-          </Button>
+          <CreateTripForm />
         </div>
       </div>
     </header>

@@ -5,10 +5,15 @@ import TripCard from '@/components/TripCard';
 import { Button } from '@/components/ui/button';
 import { getTrips } from '@/utils/mockData';
 import { Trip } from '@/types';
-import { Calendar, MapPin, PlusCircle } from 'lucide-react';
+import { Calendar, MapPin } from 'lucide-react';
+import CreateTripForm from '@/components/CreateTripForm';
 
 const Index = () => {
   const [trips, setTrips] = useState<Trip[]>(getTrips());
+  
+  const handleTripCreated = (newTrip: Trip) => {
+    setTrips(prevTrips => [...prevTrips, newTrip]);
+  };
   
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -18,10 +23,7 @@ const Index = () => {
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-gray-900">My Trips</h1>
           
-          <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            New Trip
-          </Button>
+          <CreateTripForm onTripCreated={handleTripCreated} />
         </div>
         
         <div className="mb-8">
@@ -44,10 +46,7 @@ const Index = () => {
             </div>
             <h3 className="text-xl font-medium mb-2">No trips yet</h3>
             <p className="text-gray-500 mb-6">Start by creating your first trip</p>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Create Trip
-            </Button>
+            <CreateTripForm onTripCreated={handleTripCreated} />
           </div>
         )}
       </main>

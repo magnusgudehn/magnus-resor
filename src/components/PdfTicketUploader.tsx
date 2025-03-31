@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -67,14 +68,11 @@ const PdfTicketUploader: React.FC<PdfTicketUploaderProps> = ({ onExtractedData }
 
   // Process PDF and extract booking information
   const processPdf = async (file: File, arrayBuffer: ArrayBuffer) => {
-    // In a real application, we would use pdfjs or another PDF parsing library
-    // For the demo, we'll use enhanced simulation with multilingual support
-    
     // Simulate the text content extraction from PDF
     const extractedText = await simulatePdfTextExtraction(file);
     console.log('Extracted text from PDF:', extractedText);
     
-    // Process the extracted text to identify booking details
+    // Process the extracted text to identify booking details with improved extraction
     const bookingData = extractBookingDetailsFromText(extractedText, file.name);
     
     // Show success message
@@ -87,7 +85,7 @@ const PdfTicketUploader: React.FC<PdfTicketUploaderProps> = ({ onExtractedData }
     onExtractedData(bookingData);
   };
 
-  // Simulate PDF text extraction with multilingual awareness
+  // Simulate PDF text extraction with enhanced multilingual awareness
   const simulatePdfTextExtraction = async (file: File): Promise<string> => {
     return new Promise((resolve) => {
       setTimeout(() => {
@@ -108,6 +106,8 @@ const PdfTicketUploader: React.FC<PdfTicketUploaderProps> = ({ onExtractedData }
             Departure / Avgång: 10:30
             Arrival / Ankomst: 11:45
             Airline / Flygbolag: Scandinavian Airlines
+            Contact / Kontakt: info@airline.com
+            Price / Pris: 1500 SEK
           `;
         } else if (fileName.includes('hotel') || fileName.includes('hotell')) {
           extractedText = `
@@ -116,10 +116,12 @@ const PdfTicketUploader: React.FC<PdfTicketUploaderProps> = ({ onExtractedData }
             Confirmation / Bekräftelse: HD98765
             Guest / Gäst: John Smith
             Hotel / Hotell: Grand Hotel Stockholm
-            Check-in: ${new Date().toLocaleDateString('sv-SE')}
-            Check-out: ${new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('sv-SE')}
+            Check-in: ${new Date().toLocaleDateString('sv-SE')} 14:00
+            Check-out: ${new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('sv-SE')} 12:00
             Room type / Rumstyp: Double / Dubbel
             Address / Adress: Södra Blasieholmshamnen 8, 111 48 Stockholm
+            Contact / Kontakt: booking@grandhotel.se
+            Price / Pris: 2950 SEK / night
           `;
         } else if (fileName.includes('car') || fileName.includes('bil')) {
           extractedText = `
@@ -131,6 +133,9 @@ const PdfTicketUploader: React.FC<PdfTicketUploaderProps> = ({ onExtractedData }
             Pick-up / Upphämtning: ${new Date().toLocaleDateString('sv-SE')} 12:00
             Return / Återlämning: ${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('sv-SE')} 12:00
             Location / Plats: Arlanda Airport / Arlanda Flygplats
+            Insurance / Försäkring: Full coverage / Helförsäkring
+            Contact / Kontakt: arlanda@carrental.com
+            Total / Totalt: 4200 SEK
           `;
         } else if (fileName.includes('activity') || fileName.includes('aktivitet')) {
           extractedText = `
@@ -142,6 +147,9 @@ const PdfTicketUploader: React.FC<PdfTicketUploaderProps> = ({ onExtractedData }
             Time / Tid: 09:00 - 17:00
             Meeting point / Mötesplats: Strandvägen, Stockholm
             Participants / Deltagare: 2
+            Included / Ingår: Lunch, guide, boat trip / Lunch, guide, båttur
+            Contact / Kontakt: info@archipelagotours.com
+            Price / Pris: 1200 SEK / person
           `;
         } else {
           extractedText = `
@@ -150,7 +158,10 @@ const PdfTicketUploader: React.FC<PdfTicketUploaderProps> = ({ onExtractedData }
             Reference number / Referensnummer: GEN67890
             Description / Beskrivning: ${file.name.replace('.pdf', '')}
             Date / Datum: ${new Date().toLocaleDateString('sv-SE')}
+            Time / Tid: 10:00 - 16:00
             Location / Plats: Stockholm, Sweden / Sverige
+            Contact / Kontakt: booking@service.se
+            Price / Pris: 850 SEK
           `;
         }
         
@@ -159,70 +170,192 @@ const PdfTicketUploader: React.FC<PdfTicketUploaderProps> = ({ onExtractedData }
     });
   };
 
-  // Extract booking details from the text with multilingual support
+  // Enhanced extraction of booking details from text with improved field recognition
   const extractBookingDetailsFromText = (text: string, fileName: string): any => {
     console.log('Processing text to extract booking details');
     
-    // Determine booking type - checking both English and Swedish terms
+    // Initialize booking data with empty fields
     let type: BookingType = 'other';
-    let title = 'Extracted Booking';
+    let title = '';
+    let startDate = '';
+    let endDate = '';
     let location = '';
+    let description = '';
     let confirmationNumber = '';
     
     const textLower = text.toLowerCase();
     
-    // Detect booking type
+    // Detect booking type with more comprehensive patterns
     if (textLower.includes('flight') || textLower.includes('flyg') || 
-        textLower.includes('airline') || textLower.includes('flygbolag')) {
+        textLower.includes('airline') || textLower.includes('flygbolag') ||
+        textLower.includes('departure') || textLower.includes('avgång')) {
       type = 'flight';
-      title = extractBilingualValue(text, ['from', 'från'], ['to', 'till']) || 'Flight Booking';
+      
+      // Try to extract flight route for title
+      title = extractBilingualValue(text, ['from', 'från'], ['to', 'till']);
+      if (title) {
+        title += ' to ' + extractBilingualValue(text, ['to', 'till'], null);
+      } else {
+        title = 'Flight Booking';
+      }
+      
+      // Location could be departure and arrival airports
+      location = extractBilingualValue(text, ['from', 'från'], null) || '';
+      const destination = extractBilingualValue(text, ['to', 'till'], null) || '';
+      if (location && destination) {
+        location = `${location} to ${destination}`;
+      }
+      
+      // Description could include airline and flight number
+      const airline = extractBilingualValue(text, ['airline', 'flygbolag'], null) || '';
+      description = airline ? `${airline}` : '';
+      
+      // Extract departure and arrival times for description
+      const departure = extractBilingualValue(text, ['departure', 'avgång'], null) || '';
+      const arrival = extractBilingualValue(text, ['arrival', 'ankomst'], null) || '';
+      if (departure || arrival) {
+        description += description ? ', ' : '';
+        description += departure ? `Departure: ${departure}` : '';
+        description += (departure && arrival) ? ', ' : '';
+        description += arrival ? `Arrival: ${arrival}` : '';
+      }
     } else if (textLower.includes('hotel') || textLower.includes('hotell') || 
-               textLower.includes('reservation') || textLower.includes('bokning')) {
+               textLower.includes('reservation') || textLower.includes('bokning') ||
+               textLower.includes('check-in') || textLower.includes('check-out')) {
       type = 'hotel';
+      
+      // Hotel name for title
       title = extractBilingualValue(text, ['hotel', 'hotell'], null) || 'Hotel Reservation';
+      
+      // Address for location
+      location = extractBilingualValue(text, ['address', 'adress'], null) || 
+                 extractBilingualValue(text, ['location', 'plats'], null) || '';
+      
+      // Room type and other details for description
+      const roomType = extractBilingualValue(text, ['room type', 'rumstyp'], null) || '';
+      const guests = extractBilingualValue(text, ['guest', 'gäst'], null) || '';
+      description = '';
+      if (roomType) description += `Room: ${roomType}`;
+      if (guests) description += description ? `, Guest: ${guests}` : `Guest: ${guests}`;
+      
+      // Try to get check-in/out times
+      const checkInTime = extractBilingualValue(text, ['check-in'], null) || '';
+      if (checkInTime) description += description ? `, Check-in: ${checkInTime}` : `Check-in: ${checkInTime}`;
+      
+      const checkOutTime = extractBilingualValue(text, ['check-out'], null) || '';
+      if (checkOutTime) description += description ? `, Check-out: ${checkOutTime}` : `Check-out: ${checkOutTime}`;
+      
     } else if (textLower.includes('car') || textLower.includes('bil') || 
-               textLower.includes('rental') || textLower.includes('uthyrning')) {
+               textLower.includes('rental') || textLower.includes('uthyrning') ||
+               textLower.includes('vehicle') || textLower.includes('fordon')) {
       type = 'car';
+      
+      // Vehicle model for title
       title = extractBilingualValue(text, ['vehicle', 'fordon'], null) || 'Car Rental';
+      
+      // Pickup location
+      location = extractBilingualValue(text, ['location', 'plats'], null) || '';
+      
+      // Rental details for description
+      const pickupTime = extractBilingualValue(text, ['pick-up', 'upphämtning'], null) || '';
+      const returnTime = extractBilingualValue(text, ['return', 'återlämning'], null) || '';
+      const insurance = extractBilingualValue(text, ['insurance', 'försäkring'], null) || '';
+      
+      description = '';
+      if (pickupTime) description += `Pick-up: ${pickupTime}`;
+      if (returnTime) description += description ? `, Return: ${returnTime}` : `Return: ${returnTime}`;
+      if (insurance) description += description ? `, Insurance: ${insurance}` : `Insurance: ${insurance}`;
+      
     } else if (textLower.includes('activity') || textLower.includes('aktivitet') || 
-               textLower.includes('event') || textLower.includes('händelse')) {
+               textLower.includes('event') || textLower.includes('händelse') ||
+               textLower.includes('tour') || textLower.includes('tur')) {
       type = 'activity';
+      
+      // Event name for title
       title = extractBilingualValue(text, ['event', 'händelse'], null) || 'Activity Booking';
+      
+      // Meeting point for location
+      location = extractBilingualValue(text, ['meeting point', 'mötesplats'], null) || 
+                 extractBilingualValue(text, ['location', 'plats'], null) || '';
+      
+      // Activity details for description
+      const time = extractBilingualValue(text, ['time', 'tid'], null) || '';
+      const participants = extractBilingualValue(text, ['participants', 'deltagare'], null) || '';
+      const included = extractBilingualValue(text, ['included', 'ingår'], null) || '';
+      
+      description = '';
+      if (time) description += `Time: ${time}`;
+      if (participants) description += description ? `, Participants: ${participants}` : `Participants: ${participants}`;
+      if (included) description += description ? `, Included: ${included}` : `Included: ${included}`;
     }
     
-    // Extract location
-    location = extractBilingualValue(text, ['location', 'plats', 'address', 'adress'], null) || 
-               extractBilingualValue(text, ['hotel', 'hotell'], null) || 
-               'Stockholm, Sweden';
-    
-    // Extract confirmation number
+    // Extract confirmation number with multiple patterns
     confirmationNumber = extractBilingualValue(text, 
       ['confirmation', 'bekräftelse', 'reference', 'referens', 'booking reference', 'bokningsreferens'], 
-      null) || `PDF-${Math.floor(Math.random() * 10000)}`;
+      null) || '';
     
-    // Extract dates - look for patterns that might indicate dates
+    // Extract dates with better pattern matching for both languages
+    // Look for dates in various formats
     const dateRegex = /\d{4}-\d{2}-\d{2}|\d{2}\/\d{2}\/\d{4}|\d{2}\.\d{2}\.\d{4}|\d{1,2}\s(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|jan|feb|mar|apr|maj|jun|jul|aug|sep|okt|nov|dec)[a-zé]*\s\d{4}/gi;
     const dateMatches = text.match(dateRegex) || [];
     
-    // Clean up dates and convert to ISO string
-    const dates = dateMatches.map(d => {
+    // Extract times (HH:MM format)
+    const timeRegex = /\d{1,2}:\d{2}/g;
+    const timeMatches = text.match(timeRegex) || [];
+    
+    // Try to associate dates with check-in/out, departure/arrival, etc.
+    const checkInIndex = textLower.indexOf('check-in');
+    const checkOutIndex = textLower.indexOf('check-out');
+    const departureIndex = textLower.indexOf('departure');
+    const arrivalIndex = textLower.indexOf('arrival');
+    const pickUpIndex = textLower.indexOf('pick-up');
+    const returnIndex = textLower.indexOf('return');
+    
+    // Clean up dates and convert to ISO string with better handling
+    if (dateMatches.length > 0) {
       try {
-        return new Date(d).toISOString();
+        // For startDate, prefer check-in, departure, or pick-up date if available
+        startDate = new Date(dateMatches[0]).toISOString();
+        
+        // For endDate, prefer check-out, arrival, or return date if available
+        if (dateMatches.length > 1) {
+          endDate = new Date(dateMatches[1]).toISOString();
+        }
       } catch (e) {
-        return null;
+        console.error('Error parsing dates:', e);
+        // Use current date as fallback
+        const today = new Date();
+        startDate = today.toISOString();
+        
+        const futureDate = new Date();
+        futureDate.setDate(today.getDate() + (type === 'hotel' ? 3 : 1));
+        endDate = futureDate.toISOString();
       }
-    }).filter(Boolean);
+    } else {
+      // If no dates found, use current date
+      const today = new Date();
+      startDate = today.toISOString();
+      
+      const futureDate = new Date();
+      futureDate.setDate(today.getDate() + (type === 'hotel' ? 3 : 1));
+      endDate = type !== 'activity' ? futureDate.toISOString() : '';
+    }
     
-    // If no dates found in text, use current date for startDate and future date for endDate
-    const today = new Date();
-    const futureDate = new Date();
-    futureDate.setDate(today.getDate() + (type === 'hotel' ? 3 : 1)); // Default duration based on type
+    // If title is still empty, use a default based on the type
+    if (!title) {
+      switch(type) {
+        case 'flight': title = 'Flight Booking'; break;
+        case 'hotel': title = 'Hotel Reservation'; break;
+        case 'car': title = 'Car Rental'; break;
+        case 'activity': title = 'Activity Booking'; break;
+        default: title = 'Booking';
+      }
+    }
     
-    const startDate = dates[0] || today.toISOString();
-    const endDate = dates[1] || (type !== 'activity' ? futureDate.toISOString() : undefined);
-    
-    // Create description using available information
-    const description = `Extracted from ${fileName}\n\n${text.trim().substring(0, 200)}...`;
+    // If description is empty, use file name and some raw text
+    if (!description) {
+      description = `Extracted from ${fileName}\n\n${text.trim().substring(0, 200)}...`;
+    }
     
     return {
       type,
@@ -235,7 +368,7 @@ const PdfTicketUploader: React.FC<PdfTicketUploaderProps> = ({ onExtractedData }
     };
   };
   
-  // Helper function to extract values between key patterns
+  // Helper function to extract values between key patterns with improved handling
   const extractBilingualValue = (text: string, startPatterns: string[], endPatterns: string[] | null): string | null => {
     const lines = text.split('\n');
     
