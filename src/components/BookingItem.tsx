@@ -2,7 +2,7 @@
 import React from 'react';
 import { Booking } from '@/types';
 import { format, parseISO } from 'date-fns';
-import { Airplane, Hotel, Car, Calendar, MapPin } from 'lucide-react';
+import { Plane, Hotel, Car, Calendar, MapPin } from 'lucide-react';
 
 interface BookingItemProps {
   booking: Booking;
@@ -12,7 +12,7 @@ const BookingItem: React.FC<BookingItemProps> = ({ booking }) => {
   const getIcon = () => {
     switch (booking.type) {
       case 'flight':
-        return <Airplane className="h-6 w-6 text-travel-primary" />;
+        return <Plane className="h-6 w-6 text-travel-primary" />;
       case 'hotel':
         return <Hotel className="h-6 w-6 text-travel-secondary" />;
       case 'car':
