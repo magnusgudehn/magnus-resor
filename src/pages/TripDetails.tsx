@@ -8,14 +8,22 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Trip, Booking } from '@/types';
 import { getTrip } from '@/utils/mockData';
-import { format } from 'date-fns';
+import { format, isEqual } from 'date-fns';
 import { ChevronLeft, Calendar, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
+
+interface TimelineItem {
+  id: string;
+  date: Date;
+  booking: Booking;
+  isReturn?: boolean;
+}
 
 const TripDetails = () => {
   const { id } = useParams<{ id: string }>();
   const [trip, setTrip] = useState<Trip | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [timelineItems, setTimelineItems] = useState<TimelineItem[]>([]);
   
   useEffect(() => {
     if (id) {
@@ -26,6 +34,37 @@ const TripDetails = () => {
       }
     }
   }, [id]);
+
+  // Create timeline items from bookings
+  useEffect(() => {
+    if (bookings.length) {
+      const items: TimelineItem[] = [];
+      
+      bookings.forEach(booking => {
+        // Add start date item
+        items.push({
+          id: `${booking.id}-start`,
+          date: new Date(booking.startDate),
+          booking,
+          isReturn: false
+        });
+        
+        // If booking has different end date, add it as a separate item
+        if (booking.endDate && booking.startDate !== booking.endDate) {
+          items.push({
+            id: `${booking.id}-end`,
+            date: new Date(booking.endDate),
+            booking,
+            isReturn: true
+          });
+        }
+      });
+      
+      // Sort by date
+      items.sort((a, b) => a.date.getTime() - b.date.getTime());
+      setTimelineItems(items);
+    }
+  }, [bookings]);
   
   const handleAddBooking = (newBooking: Booking) => {
     setBookings((prev) => [...prev, newBooking]);
@@ -50,11 +89,6 @@ const TripDetails = () => {
       </div>
     );
   }
-  
-  // Sort bookings by start date
-  const sortedBookings = [...bookings].sort((a, b) => 
-    new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
-  );
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -97,18 +131,23 @@ const TripDetails = () => {
           <Separator className="mb-6" />
           
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold">Trip Itinerary</h2>
+            <h2 className="text-xl font-semibold">Trip Timeline</h2>
             <AddBookingForm onAddBooking={handleAddBooking} />
           </div>
           
           <div className="relative">
-            {sortedBookings.length > 0 ? (
-              <div className="space-y-4">
-                {sortedBookings.map((booking) => (
+            {timelineItems.length > 0 ? (
+              <div className="space-y-4 pl-4 relative">
+                {/* Timeline line */}
+                <div className="timeline-line" />
+                
+                {timelineItems.map((item) => (
                   <BookingItem 
-                    key={booking.id} 
-                    booking={booking} 
+                    key={item.id} 
+                    booking={item.booking} 
                     onBookingUpdate={handleUpdateBooking}
+                    isTimelineItem={true}
+                    isReturn={item.isReturn}
                   />
                 ))}
               </div>
