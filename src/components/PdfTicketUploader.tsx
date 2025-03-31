@@ -33,11 +33,7 @@ const PdfTicketUploader: React.FC<{
     
     // Only accept PDF files
     if (file.type !== 'application/pdf') {
-      toast({
-        title: 'Invalid file type',
-        description: 'Please upload a PDF file',
-        variant: 'destructive',
-      });
+      toast.error('Invalid file type. Please upload a PDF file');
       return;
     }
 
