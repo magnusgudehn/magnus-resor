@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { DialogClose, DialogDescription } from "@/components/ui/dialog";
+import { DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -115,10 +115,10 @@ const EditBookingForm: React.FC<EditBookingFormProps> = ({ booking, onSave }) =>
             name="type"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Type</FormLabel>
+                <FormLabel className="text-gray-700">Type</FormLabel>
                 <FormControl>
                   <select
-                    className="w-full p-2 border rounded-md"
+                    className="w-full p-2 border rounded-md bg-white text-gray-800"
                     {...field}
                   >
                     {bookingTypes.map((type) => (
@@ -137,9 +137,9 @@ const EditBookingForm: React.FC<EditBookingFormProps> = ({ booking, onSave }) =>
             name="title"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Title</FormLabel>
+                <FormLabel className="text-gray-700">Title</FormLabel>
                 <FormControl>
-                  <Input placeholder="Booking title" {...field} />
+                  <Input placeholder="Booking title" {...field} className="bg-white text-gray-800" />
                 </FormControl>
               </FormItem>
             )}
@@ -152,14 +152,14 @@ const EditBookingForm: React.FC<EditBookingFormProps> = ({ booking, onSave }) =>
             name="startDate"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Start Date</FormLabel>
+                <FormLabel className="text-gray-700">Start Date</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
                       <Button
                         variant={"outline"}
                         className={cn(
-                          "w-full pl-3 text-left font-normal",
+                          "w-full pl-3 text-left font-normal bg-white",
                           !field.value && "text-muted-foreground"
                         )}
                       >
@@ -172,7 +172,7 @@ const EditBookingForm: React.FC<EditBookingFormProps> = ({ booking, onSave }) =>
                       </Button>
                     </FormControl>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
+                  <PopoverContent className="w-auto p-0 bg-white" align="start">
                     <Calendar
                       mode="single"
                       selected={field.value}
@@ -190,7 +190,7 @@ const EditBookingForm: React.FC<EditBookingFormProps> = ({ booking, onSave }) =>
             name="startTime"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Start Time</FormLabel>
+                <FormLabel className="text-gray-700">Start Time</FormLabel>
                 <FormControl>
                   <div className="flex items-center">
                     <Clock className="mr-2 h-4 w-4 text-gray-400" />
@@ -198,6 +198,7 @@ const EditBookingForm: React.FC<EditBookingFormProps> = ({ booking, onSave }) =>
                       type="time"
                       placeholder="HH:MM"
                       {...field}
+                      className="bg-white text-gray-800"
                     />
                   </div>
                 </FormControl>
@@ -212,14 +213,14 @@ const EditBookingForm: React.FC<EditBookingFormProps> = ({ booking, onSave }) =>
             name="endDate"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>End Date</FormLabel>
+                <FormLabel className="text-gray-700">End Date</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
                       <Button
                         variant={"outline"}
                         className={cn(
-                          "w-full pl-3 text-left font-normal",
+                          "w-full pl-3 text-left font-normal bg-white",
                           !field.value && "text-muted-foreground"
                         )}
                       >
@@ -232,7 +233,7 @@ const EditBookingForm: React.FC<EditBookingFormProps> = ({ booking, onSave }) =>
                       </Button>
                     </FormControl>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
+                  <PopoverContent className="w-auto p-0 bg-white" align="start">
                     <Calendar
                       mode="single"
                       selected={field.value}
@@ -250,7 +251,7 @@ const EditBookingForm: React.FC<EditBookingFormProps> = ({ booking, onSave }) =>
             name="endTime"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>End Time</FormLabel>
+                <FormLabel className="text-gray-700">End Time</FormLabel>
                 <FormControl>
                   <div className="flex items-center">
                     <Clock className="mr-2 h-4 w-4 text-gray-400" />
@@ -258,6 +259,7 @@ const EditBookingForm: React.FC<EditBookingFormProps> = ({ booking, onSave }) =>
                       type="time"
                       placeholder="HH:MM"
                       {...field}
+                      className="bg-white text-gray-800"
                     />
                   </div>
                 </FormControl>
@@ -271,9 +273,9 @@ const EditBookingForm: React.FC<EditBookingFormProps> = ({ booking, onSave }) =>
           name="location"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Location</FormLabel>
+              <FormLabel className="text-gray-700">Location</FormLabel>
               <FormControl>
-                <Input placeholder="Location (optional)" {...field} />
+                <Input placeholder="Location (optional)" {...field} className="bg-white text-gray-800" />
               </FormControl>
             </FormItem>
           )}
@@ -284,9 +286,9 @@ const EditBookingForm: React.FC<EditBookingFormProps> = ({ booking, onSave }) =>
           name="confirmationNumber"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Confirmation Number</FormLabel>
+              <FormLabel className="text-gray-700">Confirmation Number</FormLabel>
               <FormControl>
-                <Input placeholder="Confirmation number (optional)" {...field} />
+                <Input placeholder="Confirmation number (optional)" {...field} className="bg-white text-gray-800" />
               </FormControl>
             </FormItem>
           )}
@@ -297,11 +299,11 @@ const EditBookingForm: React.FC<EditBookingFormProps> = ({ booking, onSave }) =>
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description</FormLabel>
+              <FormLabel className="text-gray-700">Description</FormLabel>
               <FormControl>
                 <Textarea
                   placeholder="Description (optional)"
-                  className="resize-none"
+                  className="resize-none bg-white text-gray-800"
                   {...field}
                 />
               </FormControl>
@@ -311,7 +313,7 @@ const EditBookingForm: React.FC<EditBookingFormProps> = ({ booking, onSave }) =>
 
         <div className="flex justify-end space-x-2 pt-4">
           <DialogClose asChild>
-            <Button variant="outline" type="button">Cancel</Button>
+            <Button variant="outline" type="button" className="bg-white text-gray-800">Cancel</Button>
           </DialogClose>
           <Button type="submit">Save Changes</Button>
         </div>

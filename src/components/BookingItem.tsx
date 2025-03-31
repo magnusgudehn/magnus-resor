@@ -198,7 +198,7 @@ const BookingItem: React.FC<BookingItemProps> = ({
               <span className="sr-only">Edit booking</span>
             </button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[550px]">
+          <DialogContent className="sm:max-w-[550px] bg-white">
             <DialogHeader>
               <DialogTitle>Edit Booking</DialogTitle>
               <DialogDescription>Make changes to your booking here.</DialogDescription>
