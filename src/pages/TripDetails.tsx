@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Trip, Booking } from '@/types';
 import { getTrip } from '@/utils/mockData';
 import { format, isEqual } from 'date-fns';
-import { ChevronLeft, Calendar, MapPin } from 'lucide-react';
+import { ChevronLeft, Calendar, MapPin, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface TimelineItem {
@@ -63,11 +63,14 @@ const TripDetails = () => {
       // Sort by date
       items.sort((a, b) => a.date.getTime() - b.date.getTime());
       setTimelineItems(items);
+    } else {
+      setTimelineItems([]);
     }
   }, [bookings]);
   
   const handleAddBooking = (newBooking: Booking) => {
     setBookings((prev) => [...prev, newBooking]);
+    toast.success("Booking added successfully");
   };
   
   const handleUpdateBooking = (updatedBooking: Booking) => {
@@ -139,7 +142,7 @@ const TripDetails = () => {
             {timelineItems.length > 0 ? (
               <div className="space-y-4 pl-4 relative">
                 {/* Timeline line */}
-                <div className="timeline-line" />
+                <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gray-200" style={{ left: '0.25rem' }} />
                 
                 {timelineItems.map((item) => (
                   <BookingItem 

@@ -2,7 +2,7 @@
 import React from 'react';
 import { Booking } from '@/types';
 import { format, parseISO } from 'date-fns';
-import { Plane, Hotel, Car, Calendar, MapPin, FileText, Edit, ArrowRight } from 'lucide-react';
+import { Plane, Hotel, Car, Calendar, MapPin, FileText, Edit, ArrowRight, Clock } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import EditBookingForm from './EditBookingForm';
 
@@ -39,11 +39,19 @@ const BookingItem: React.FC<BookingItemProps> = ({
   const formatDate = (date: string) => {
     if (date.includes('T')) {
       // Date with time
-      return format(parseISO(date), 'MMM d, yyyy - h:mm a');
+      return format(parseISO(date), 'MMM d, yyyy');
     } else {
       // Date only
       return format(new Date(date), 'MMM d, yyyy');
     }
+  };
+
+  const formatTime = (date: string) => {
+    if (date.includes('T')) {
+      // Date with time
+      return format(parseISO(date), 'h:mm a');
+    }
+    return null;
   };
 
   // For timeline view, we show a simplified version
@@ -69,6 +77,14 @@ const BookingItem: React.FC<BookingItemProps> = ({
                   <Calendar className="h-4 w-4" />
                   <span>{isReturn ? formatDate(booking.endDate || '') : formatDate(booking.startDate)}</span>
                 </div>
+                
+                {/* Add time with a clock icon if a time is available */}
+                {formatTime(isReturn ? booking.endDate || '' : booking.startDate) && (
+                  <div className="flex items-center gap-1 mt-1">
+                    <Clock className="h-4 w-4" />
+                    <span className="font-medium">{formatTime(isReturn ? booking.endDate || '' : booking.startDate)}</span>
+                  </div>
+                )}
                 
                 {booking.location && (
                   <div className="flex items-center gap-1 mt-1">
@@ -129,12 +145,30 @@ const BookingItem: React.FC<BookingItemProps> = ({
                 <Calendar className="h-4 w-4" />
                 <span>{formatDate(booking.startDate)}</span>
               </div>
+
+              {/* Add time with a clock icon if a time is available */}
+              {formatTime(booking.startDate) && (
+                <div className="flex items-center gap-1 mt-1">
+                  <Clock className="h-4 w-4" />
+                  <span className="font-medium">{formatTime(booking.startDate)}</span>
+                </div>
+              )}
               
               {booking.endDate && booking.startDate !== booking.endDate && (
-                <div className="flex items-center gap-1 mt-1">
-                  <ArrowRight className="h-4 w-4" />
-                  <span>{formatDate(booking.endDate)}</span>
-                </div>
+                <>
+                  <div className="flex items-center gap-1 mt-1">
+                    <ArrowRight className="h-4 w-4" />
+                    <span>{formatDate(booking.endDate)}</span>
+                  </div>
+                  
+                  {/* Add end time with a clock icon if a time is available */}
+                  {formatTime(booking.endDate) && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <Clock className="h-4 w-4" />
+                      <span className="font-medium">{formatTime(booking.endDate)}</span>
+                    </div>
+                  )}
+                </>
               )}
               
               {booking.location && (
