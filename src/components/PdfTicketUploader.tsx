@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { FileText, Upload, LoaderCircle } from 'lucide-react';
@@ -7,11 +6,8 @@ import { toast } from 'sonner';
 import { BookingType } from '@/types';
 import * as pdfjs from 'pdfjs-dist';
 
-// Initialize the PDF.js worker
-const pdfjsWorker = await import('pdfjs-dist/build/pdf.worker.mjs');
-pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
-
-interface PdfTicketUploaderProps {
+// Initialize PDF.js worker
+const PdfTicketUploader: React.FC<{
   onExtractedData: (data: {
     type: BookingType;
     title: string;
@@ -21,11 +17,15 @@ interface PdfTicketUploaderProps {
     description?: string;
     confirmationNumber?: string;
   }) => void;
-}
-
-const PdfTicketUploader: React.FC<PdfTicketUploaderProps> = ({ onExtractedData }) => {
+}> = ({ onExtractedData }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
+  
+  // Initialize PDF.js worker when component mounts
+  useEffect(() => {
+    const workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+    pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
+  }, []);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
