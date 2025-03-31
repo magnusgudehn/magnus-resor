@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -192,18 +191,18 @@ const PdfTicketUploader: React.FC<PdfTicketUploaderProps> = ({ onExtractedData }
       type = 'flight';
       
       // Try to extract flight route for title
-      title = extractBilingualValue(text, ['from', 'från'], ['to', 'till']);
-      if (title) {
-        title += ' to ' + extractBilingualValue(text, ['to', 'till'], null);
+      const fromLocation = extractBilingualValue(text, ['from', 'från'], null);
+      const toLocation = extractBilingualValue(text, ['to', 'till'], null);
+      
+      if (fromLocation && toLocation) {
+        title = `${fromLocation} to ${toLocation}`;
       } else {
         title = 'Flight Booking';
       }
       
       // Location could be departure and arrival airports
-      location = extractBilingualValue(text, ['from', 'från'], null) || '';
-      const destination = extractBilingualValue(text, ['to', 'till'], null) || '';
-      if (location && destination) {
-        location = `${location} to ${destination}`;
+      if (fromLocation && toLocation) {
+        location = `${fromLocation} to ${toLocation}`;
       }
       
       // Description could include airline and flight number
@@ -219,6 +218,13 @@ const PdfTicketUploader: React.FC<PdfTicketUploaderProps> = ({ onExtractedData }
         description += (departure && arrival) ? ', ' : '';
         description += arrival ? `Arrival: ${arrival}` : '';
       }
+      
+      // Extract passenger info if available
+      const passenger = extractBilingualValue(text, ['passenger', 'passagerare'], null);
+      if (passenger) {
+        description += description ? `\nPassenger: ${passenger}` : `Passenger: ${passenger}`;
+      }
+      
     } else if (textLower.includes('hotel') || textLower.includes('hotell') || 
                textLower.includes('reservation') || textLower.includes('bokning') ||
                textLower.includes('check-in') || textLower.includes('check-out')) {
@@ -266,6 +272,12 @@ const PdfTicketUploader: React.FC<PdfTicketUploaderProps> = ({ onExtractedData }
       if (returnTime) description += description ? `, Return: ${returnTime}` : `Return: ${returnTime}`;
       if (insurance) description += description ? `, Insurance: ${insurance}` : `Insurance: ${insurance}`;
       
+      // Customer info
+      const customer = extractBilingualValue(text, ['customer', 'kund'], null);
+      if (customer) {
+        description += description ? `\nCustomer: ${customer}` : `Customer: ${customer}`;
+      }
+      
     } else if (textLower.includes('activity') || textLower.includes('aktivitet') || 
                textLower.includes('event') || textLower.includes('händelse') ||
                textLower.includes('tour') || textLower.includes('tur')) {
@@ -311,11 +323,19 @@ const PdfTicketUploader: React.FC<PdfTicketUploaderProps> = ({ onExtractedData }
     const pickUpIndex = textLower.indexOf('pick-up');
     const returnIndex = textLower.indexOf('return');
     
+    // Extract date from format like "Date / Datum: 2023-05-15"
+    const dateLabel = extractBilingualValue(text, ['date', 'datum'], null);
+    
     // Clean up dates and convert to ISO string with better handling
-    if (dateMatches.length > 0) {
+    if (dateMatches.length > 0 || dateLabel) {
       try {
-        // For startDate, prefer check-in, departure, or pick-up date if available
-        startDate = new Date(dateMatches[0]).toISOString();
+        // If we have a specific date label, use that
+        if (dateLabel) {
+          startDate = new Date(dateLabel).toISOString();
+        } else {
+          // Otherwise use the first date match
+          startDate = new Date(dateMatches[0]).toISOString();
+        }
         
         // For endDate, prefer check-out, arrival, or return date if available
         if (dateMatches.length > 1) {
@@ -327,18 +347,22 @@ const PdfTicketUploader: React.FC<PdfTicketUploaderProps> = ({ onExtractedData }
         const today = new Date();
         startDate = today.toISOString();
         
-        const futureDate = new Date();
-        futureDate.setDate(today.getDate() + (type === 'hotel' ? 3 : 1));
-        endDate = futureDate.toISOString();
+        if (type === 'hotel' || type === 'car') {
+          const futureDate = new Date();
+          futureDate.setDate(today.getDate() + (type === 'hotel' ? 3 : 1));
+          endDate = futureDate.toISOString();
+        }
       }
     } else {
       // If no dates found, use current date
       const today = new Date();
       startDate = today.toISOString();
       
-      const futureDate = new Date();
-      futureDate.setDate(today.getDate() + (type === 'hotel' ? 3 : 1));
-      endDate = type !== 'activity' ? futureDate.toISOString() : '';
+      if (type === 'hotel' || type === 'car') {
+        const futureDate = new Date();
+        futureDate.setDate(today.getDate() + (type === 'hotel' ? 3 : 1));
+        endDate = futureDate.toISOString();
+      }
     }
     
     // If title is still empty, use a default based on the type
@@ -354,17 +378,17 @@ const PdfTicketUploader: React.FC<PdfTicketUploaderProps> = ({ onExtractedData }
     
     // If description is empty, use file name and some raw text
     if (!description) {
-      description = `Extracted from ${fileName}\n\n${text.trim().substring(0, 200)}...`;
+      description = `Extracted from ${fileName}`;
     }
     
     return {
       type,
       title,
       startDate,
-      endDate,
-      location,
-      description,
-      confirmationNumber,
+      endDate: endDate || undefined,
+      location: location || undefined,
+      description: description || undefined,
+      confirmationNumber: confirmationNumber || undefined,
     };
   };
   

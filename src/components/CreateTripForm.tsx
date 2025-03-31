@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { PlusCircle, CalendarIcon, MapPin } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { getTrips } from '@/utils/mockData';
 import { Trip } from '@/types';
@@ -34,21 +34,13 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({ onTripCreated }) => {
 
     // Basic validation
     if (!trip.title || !trip.destination || !trip.startDate || !trip.endDate) {
-      toast({
-        title: 'Missing information',
-        description: 'Please fill in all required fields',
-        variant: 'destructive',
-      });
+      toast.error('Please fill in all required fields');
       return;
     }
 
     // Check that end date is after start date
     if (new Date(trip.endDate) < new Date(trip.startDate)) {
-      toast({
-        title: 'Invalid dates',
-        description: 'End date must be after start date',
-        variant: 'destructive',
-      });
+      toast.error('End date must be after start date');
       return;
     }
 
@@ -68,10 +60,7 @@ const CreateTripForm: React.FC<CreateTripFormProps> = ({ onTripCreated }) => {
     const trips = getTrips();
     trips.push(newTrip as Trip);
 
-    toast({
-      title: 'Trip created!',
-      description: `${trip.title} has been added to your trips.`,
-    });
+    toast.success(`${trip.title} has been added to your trips.`);
 
     // Call the callback if provided
     if (onTripCreated) {
