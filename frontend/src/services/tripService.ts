@@ -1,23 +1,15 @@
 import { Trip } from '../types';
 
-const STORAGE_KEY = 'travel_trips';
+const API_URL = 'http://localhost:3001/api';
 
 export const tripService = {
   getTrip: async (tripId: string): Promise<Trip | null> => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (!stored) {
-        console.log('No trips found in storage');
-        return null;
+      const response = await fetch(`${API_URL}/trips/${tripId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch trip');
       }
-
-      const trips: Trip[] = JSON.parse(stored);
-      console.log('All trips:', trips);
-      
-      const trip = trips.find(t => t.id === tripId);
-      console.log('Found trip:', trip);
-      
-      return trip || null;
+      return await response.json();
     } catch (error) {
       console.error('Error getting trip:', error);
       return null;
@@ -26,55 +18,69 @@ export const tripService = {
 
   saveTrip: async (trip: Trip): Promise<Trip> => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      const trips: Trip[] = stored ? JSON.parse(stored) : [];
+      const response = await fetch(`${API_URL}/trips`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(trip)
+      });
       
-      const existingTripIndex = trips.findIndex(t => t.id === trip.id);
-      if (existingTripIndex >= 0) {
-        trips[existingTripIndex] = trip;
-      } else {
-        trips.push(trip);
+      if (!response.ok) {
+        throw new Error('Failed to save trip');
       }
       
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(trips));
-      return trip;
+      return await response.json();
     } catch (error) {
       console.error('Error saving trip:', error);
       throw error;
     }
   },
 
-  getTrips(): Promise<Trip[]> {
-    const trips = localStorage.getItem('travel_trips');
-    return Promise.resolve(trips ? JSON.parse(trips) : []);
-  },
-
-  async deleteTrip(tripId: string): Promise<void> {
-    const trips = await this.getTrips();
-    const updatedTrips = trips.filter(trip => trip.id !== tripId);
-    localStorage.setItem('travel_trips', JSON.stringify(updatedTrips));
-    // Ta även bort alla bokningar för denna resa
-    localStorage.removeItem(`travel_bookings_${tripId}`);
-  },
-
-  async updateTripDates(tripId: string, bookings: Booking[]): Promise<void> {
-    const trips = await this.getTrips();
-    const tripIndex = trips.findIndex(t => t.id === tripId);
-    
-    if (tripIndex === -1) return;
-
-    if (bookings.length > 0) {
-      const dates = bookings.flatMap(booking => [
-        booking.startDate,
-        booking.endDate
-      ]).filter(Boolean);
-
-      if (dates.length > 0) {
-        trips[tripIndex].startDate = new Date(Math.min(...dates.map(d => new Date(d).getTime()))).toISOString().split('T')[0];
-        trips[tripIndex].endDate = new Date(Math.max(...dates.map(d => new Date(d).getTime()))).toISOString().split('T')[0];
+  getTrips: async (): Promise<Trip[]> => {
+    try {
+      const response = await fetch(`${API_URL}/trips`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch trips');
       }
+      return await response.json();
+    } catch (error) {
+      console.error('Error getting trips:', error);
+      return [];
     }
+  },
 
-    localStorage.setItem('travel_trips', JSON.stringify(trips));
+  deleteTrip: async (tripId: string): Promise<void> => {
+    try {
+      const response = await fetch(`${API_URL}/trips/${tripId}`, {
+        method: 'DELETE'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete trip');
+      }
+    } catch (error) {
+      console.error('Error deleting trip:', error);
+      throw error;
+    }
+  },
+
+  updateTripDates: async (tripId: string, startDate: string, endDate: string): Promise<void> => {
+    try {
+      const response = await fetch(`${API_URL}/trips/${tripId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ startDate, endDate })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update trip dates');
+      }
+    } catch (error) {
+      console.error('Error updating trip dates:', error);
+      throw error;
+    }
   }
 }; 

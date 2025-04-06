@@ -1,12 +1,9 @@
+
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
-import { useState } from "react"
-import { Label } from "./label"
-import { Input } from "./input"
-import { Button } from "./button"
 
-import { cn } from "../../lib/utils"
+import { cn } from "@/lib/utils"
 
 const Dialog = DialogPrimitive.Root
 
@@ -36,11 +33,11 @@ const DialogContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => (
   <DialogPortal>
-    <DialogOverlay className="bg-black/80" />
+    <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-white p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
+        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-white p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg dark:bg-gray-900 dark:text-gray-100",
         className
       )}
       {...props}
@@ -90,7 +87,7 @@ const DialogTitle = React.forwardRef<
   <DialogPrimitive.Title
     ref={ref}
     className={cn(
-      "text-lg font-semibold leading-none tracking-tight",
+      "text-lg font-semibold leading-none tracking-tight text-gray-900 dark:text-white",
       className
     )}
     {...props}
@@ -109,55 +106,6 @@ const DialogDescription = React.forwardRef<
   />
 ))
 DialogDescription.displayName = DialogPrimitive.Description.displayName
-
-export interface SimpleDialogProps {
-  open: boolean;
-  onClose: () => void;
-  onSubmit: (title: string) => Promise<void>;
-}
-
-export const SimpleDialog: React.FC<SimpleDialogProps> = ({
-  open,
-  onClose,
-  onSubmit,
-}) => {
-  const [title, setTitle] = useState('');
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    await onSubmit(title);
-    setTitle('');
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Skapa ny resa</DialogTitle>
-          <DialogDescription>
-            Ange destination för din nya resa
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="title">Destination</Label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="T.ex. Paris"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="submit">Skapa resa</Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-};
 
 export {
   Dialog,

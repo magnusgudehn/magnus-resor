@@ -1,9 +1,8 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { tripService } from '../services/tripService';
 import { imageService } from '../services/imageService';
 import { Trip } from '../types';
-import { SimpleDialog } from '../components/ui/dialog';
 import { Button } from '../components/ui/button';
 import { PlusCircle, Trash2 } from 'lucide-react';
 
@@ -13,9 +12,9 @@ function isOldTrip(trip: Trip): boolean {
 }
 
 const Home: React.FC = () => {
+  const navigate = useNavigate();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [tripImages, setTripImages] = useState<Record<string, string>>({});
-  const [showCreateForm, setShowCreateForm] = useState(false);
 
   // Separera resor i kommande och tidigare
   const upcomingTrips = trips.filter(trip => !isOldTrip(trip));
@@ -37,20 +36,6 @@ const Home: React.FC = () => {
     setTripImages(images);
   }
 
-  async function handleCreateTrip(title: string) {
-    const newTrip: Trip = {
-      id: `trip-${Date.now()}`,
-      title,
-      startDate: new Date().toISOString().split('T')[0], // Default datum som kommer uppdateras när bokningar läggs till
-      endDate: new Date().toISOString().split('T')[0]
-    };
-    await tripService.saveTrip(newTrip);
-    const imageUrl = await imageService.getDestinationImage(title);
-    setTripImages(prev => ({ ...prev, [newTrip.id]: imageUrl }));
-    await loadTrips();
-    setShowCreateForm(false);
-  }
-
   async function handleDeleteTrip(tripId: string) {
     if (confirm('Are you sure you want to delete this trip?')) {
       await tripService.deleteTrip(tripId);
@@ -58,25 +43,11 @@ const Home: React.FC = () => {
     }
   }
 
-  const sortedTrips = [...trips].sort((a, b) => 
-    new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
-  );
-
-  const handleBookingSubmit = async (bookingData: any) => {
-    try {
-      // Här kan du anropa din bookingService för att spara bokningen
-      console.log('Ny bokning:', bookingData);
-      await loadTrips(); // Ladda om resorna efter att bokningen är sparad
-    } catch (error) {
-      console.error('Fel vid skapande av bokning:', error);
-    }
-  };
-
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Resor</h1>
-        <Button onClick={() => setShowCreateForm(true)}>
+        <Button onClick={() => navigate('/trips/new')}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Ny resa
         </Button>
@@ -87,7 +58,7 @@ const Home: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {upcomingTrips.map((trip) => (
           <div key={trip.id} className="relative">
-            <Link to={`/trip/${trip.id}`} className="block">
+            <Link to={`/trips/${trip.id}`} className="block">
               <div className="bg-white rounded-lg shadow-lg overflow-hidden">
                 <img 
                   src={tripImages[trip.id]} 
@@ -123,7 +94,7 @@ const Home: React.FC = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {pastTrips.map((trip) => (
-              <Link key={trip.id} to={`/trip/${trip.id}`} className="block opacity-75">
+              <Link key={trip.id} to={`/trips/${trip.id}`} className="block opacity-75">
                 <div className="bg-white rounded-lg shadow-lg overflow-hidden">
                   <img 
                     src={tripImages[trip.id]} 
@@ -140,58 +111,8 @@ const Home: React.FC = () => {
           </div>
         </>
       )}
-
-      <SimpleDialog
-        open={showCreateForm}
-        onClose={() => setShowCreateForm(false)}
-        onSubmit={handleCreateTrip}
-      />
     </div>
   );
 };
 
-export default Home;
-
-function CreateTripForm({ onSubmit, onCancel }: { 
-  onSubmit: (title: string) => void;
-  onCancel: () => void;
-}) {
-  const [title, setTitle] = useState('');
-
-  return (
-    <form onSubmit={(e) => {
-      e.preventDefault();
-      onSubmit(title);
-    }} className="space-y-4">
-      <h2 className="text-xl font-semibold mb-4">Create New Trip</h2>
-      
-      <div>
-        <label className="block text-sm font-medium mb-1">Destination</label>
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full border rounded-md p-2"
-          placeholder="Enter destination"
-          required
-        />
-      </div>
-
-      <div className="flex justify-end gap-2 pt-4">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-2 text-gray-600 hover:text-gray-800"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          Create Trip
-        </button>
-      </div>
-    </form>
-  );
-} 
+export default Home; 

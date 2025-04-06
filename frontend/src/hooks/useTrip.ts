@@ -49,5 +49,16 @@ export function useTrip(tripId: string) {
     }
   };
 
-  return { trip, isLoading, error, updateTrip };
+  const deleteTrip = async () => {
+    try {
+      await tripService.deleteTrip(tripId);
+      setTrip(null);
+    } catch (err) {
+      console.error('Error deleting trip:', err);
+      setError('Failed to delete trip');
+      throw err;
+    }
+  };
+
+  return { trip, isLoading, error, updateTrip, deleteTrip };
 } 

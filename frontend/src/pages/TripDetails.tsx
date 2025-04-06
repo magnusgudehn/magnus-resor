@@ -1,157 +1,186 @@
-import { useState } from 'react';
-import { useParams, Link, useLocation } from 'react-router-dom';
-import { useTrip } from '../hooks/useTrip';
-import { useBookings } from '../hooks/useBookings';
-import { BookingForm } from '../components/bookings/BookingForm';
-import { SimpleDialog } from '../components/ui/dialog';
-import { LoadingSpinner } from '../components/ui/loading-spinner';
-import type { Booking } from '../types';
-import { BookingIcon } from '../components/bookings/BookingIcon';
-import { Button } from '../components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import Navbar from '../components/Navbar';
+import BookingItem from '../components/BookingItem';
 import AddBookingForm from '../components/AddBookingForm';
+import { Button } from '../components/ui/button';
+import { Separator } from '../components/ui/separator';
+import { Trip, Booking } from '../types';
+import { tripService } from '../services/tripService';
+import { format } from 'date-fns';
+import { ChevronLeft, Calendar, MapPin } from 'lucide-react';
+import { toast } from 'sonner';
 
-export default function TripDetails() {
-  const { tripId } = useParams<{ tripId: string }>();
-  const location = useLocation();
-  const { trip, isLoading: tripLoading } = useTrip(tripId!);
-  const [showBookingForm, setShowBookingForm] = useState(false);
-  const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
+interface TimelineItem {
+  id: string;
+  date: Date;
+  booking: Booking;
+  isReturn?: boolean;
+}
 
-  const {
-    bookings,
-    isLoading: bookingsLoading,
-    addBooking,
-    updateBooking,
-    deleteBooking
-  } = useBookings(tripId!);
-
-  // Skapa expanderad lista med bokningar för både start- och slutdatum
-  const expandedBookings = bookings.flatMap(booking => {
-    const items = [
-      { 
-        ...booking, 
-        displayDate: booking.startDate, 
-        displayTime: booking.startTime,
-        isEndDate: false 
+const TripDetails = () => {
+  const { id } = useParams<{ id: string }>();
+  const [trip, setTrip] = useState<Trip | null>(null);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [timelineItems, setTimelineItems] = useState<TimelineItem[]>([]);
+  
+  useEffect(() => {
+    const loadTrip = async () => {
+      if (id) {
+        const tripData = await tripService.getTrip(id);
+        if (tripData) {
+          setTrip(tripData);
+          setBookings(tripData.bookings || []);
+        }
       }
-    ];
-    if (booking.endDate) {
-      items.push({
-        ...booking,
-        displayDate: booking.endDate,
-        displayTime: booking.endTime,
-        isEndDate: true
+    };
+    loadTrip();
+  }, [id]);
+
+  // Create timeline items from bookings
+  useEffect(() => {
+    if (bookings.length) {
+      const items: TimelineItem[] = [];
+      
+      bookings.forEach(booking => {
+        // Add start date item
+        items.push({
+          id: `${booking.id}-start`,
+          date: new Date(booking.startDate),
+          booking,
+          isReturn: false
+        });
+        
+        // If booking has different end date, add it as a separate item
+        if (booking.endDate && booking.startDate !== booking.endDate) {
+          items.push({
+            id: `${booking.id}-end`,
+            date: new Date(booking.endDate),
+            booking,
+            isReturn: true
+          });
+        }
       });
+      
+      // Sort by date
+      items.sort((a, b) => a.date.getTime() - b.date.getTime());
+      setTimelineItems(items);
+    } else {
+      setTimelineItems([]);
     }
-    return items;
-  }).sort((a, b) => {
-    const dateA = new Date(`${a.displayDate}T${a.displayTime || '00:00'}`);
-    const dateB = new Date(`${b.displayDate}T${b.displayTime || '00:00'}`);
-    return dateA.getTime() - dateB.getTime();
-  });
-
-  const handleBookingSubmit = async (bookingData: any) => {
+  }, [bookings]);
+  
+  const handleAddBooking = async (newBooking: Booking) => {
+    if (!trip) return;
+    
+    const updatedBookings = [...bookings, newBooking];
+    const updatedTrip = { ...trip, bookings: updatedBookings };
+    
     try {
-      if (editingBooking) {
-        await updateBooking({ ...bookingData, id: editingBooking.id });
-        setEditingBooking(null);
-      } else {
-        await addBooking(bookingData);
-      }
-      // Eventuellt uppdatera UI eller ladda om data
+      await tripService.saveTrip(updatedTrip);
+      setBookings(updatedBookings);
+      toast.success("Bokning tillagd");
     } catch (error) {
-      console.error('Failed to save booking:', error);
-      alert('Failed to save booking. Please try again.');
+      toast.error("Kunde inte lägga till bokning");
     }
   };
-
-  if (tripLoading || bookingsLoading) {
-    return <LoadingSpinner />;
-  }
-
+  
+  const handleUpdateBooking = async (updatedBooking: Booking) => {
+    if (!trip) return;
+    
+    const updatedBookings = bookings.map((booking) => 
+      booking.id === updatedBooking.id ? updatedBooking : booking
+    );
+    const updatedTrip = { ...trip, bookings: updatedBookings };
+    
+    try {
+      await tripService.saveTrip(updatedTrip);
+      setBookings(updatedBookings);
+      toast.success("Bokning uppdaterad");
+    } catch (error) {
+      toast.error("Kunde inte uppdatera bokning");
+    }
+  };
+  
   if (!trip) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Trip not found</h2>
-          <Link to="/" className="text-blue-500 hover:text-blue-600">
-            Return to home
-          </Link>
+      <div className="min-h-screen flex flex-col bg-gray-50">
+        <Navbar />
+        <div className="flex-1 container mx-auto px-4 py-8 flex items-center justify-center">
+          <p>Resan hittades inte</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <Link to="/" className="text-blue-500 hover:text-blue-600 mb-4 block">
-          ← Back to trips
-        </Link>
-        {location.state?.imageUrl && (
-          <img
-            src={location.state.imageUrl}
-            alt={trip.title}
-            className="w-full h-48 object-cover rounded-lg mb-4"
-          />
-        )}
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">{trip.title}</h1>
-          <AddBookingForm 
-            onSubmit={handleBookingSubmit}
-            mode="create"
-          />
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        {expandedBookings.map((booking, index) => (
-          <div
-            key={`${booking.id}-${booking.isEndDate ? 'end' : 'start'}`}
-            onClick={() => {
-              setEditingBooking(booking);
-              setShowBookingForm(true);
-            }}
-            className="bg-white p-4 rounded-lg shadow cursor-pointer hover:shadow-md"
-          >
-            <div className="flex items-start gap-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <BookingIcon 
-                    type={booking.type} 
-                    className="w-8 h-8 text-gray-600" 
-                  />
-                  <h3 className="font-medium">
-                    {booking.title}
-                    {booking.isEndDate ? ' (End)' : ' (Start)'}
-                  </h3>
-                </div>
-                <p className="text-gray-600 text-sm">
-                  {new Date(booking.displayDate).toLocaleDateString()}
-                  {booking.displayTime && ` ${booking.displayTime}`}
-                </p>
-                {booking.type === 'flight' && (
-                  <p className="text-sm text-gray-500 mt-1">
-                    {booking.from} → {booking.to}
-                  </p>
-                )}
-                {booking.notes && (
-                  <p className="text-sm text-gray-500 mt-2">{booking.notes}</p>
-                )}
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      <Navbar />
+      
+      <main className="flex-1 container mx-auto px-4 py-8">
+        <div className="bg-white rounded-lg border shadow-sm p-6 mb-8">
+          {trip.image && (
+            <div className="mb-6 -mt-6 -mx-6 rounded-t-lg overflow-hidden">
+              <img 
+                src={trip.image} 
+                alt={trip.destination} 
+                className="w-full h-64 object-cover"
+              />
+            </div>
+          )}
+          
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">{trip.title}</h1>
+              <div className="flex items-center gap-1 text-gray-500 mt-2">
+                <MapPin className="h-4 w-4" />
+                <span>{trip.destination}</span>
               </div>
             </div>
+            
+            <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-md">
+              <Calendar className="h-4 w-4 text-travel-primary" />
+              <span>
+                {format(new Date(trip.startDate), 'MMM d')} - {format(new Date(trip.endDate), 'MMM d, yyyy')}
+              </span>
+            </div>
           </div>
-        ))}
-      </div>
-
-      {showBookingForm && editingBooking && (
-        <AddBookingForm 
-          onSubmit={handleBookingSubmit}
-          existingBooking={editingBooking}
-          mode="edit"
-        />
-      )}
+          
+          <Separator className="mb-6" />
+          
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold">Bokningar</h2>
+            <AddBookingForm onAddBooking={handleAddBooking} />
+          </div>
+          
+          <div className="relative">
+            {timelineItems.length > 0 ? (
+              <div className="space-y-4 pl-4 relative">
+                {/* Timeline line */}
+                <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gray-200" style={{ left: '0.25rem' }} />
+                
+                {timelineItems.map((item) => (
+                  <BookingItem 
+                    key={item.id} 
+                    booking={item.booking} 
+                    onBookingUpdate={handleUpdateBooking}
+                    isTimelineItem={true}
+                    isReturn={item.isReturn}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 border border-dashed rounded-lg">
+                <h3 className="text-lg font-medium mb-2">Inga bokningar än</h3>
+                <p className="text-gray-500 mb-4">Börja med att lägga till dina bokningar</p>
+                <AddBookingForm onAddBooking={handleAddBooking} />
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
     </div>
   );
-} 
+};
+
+export default TripDetails;

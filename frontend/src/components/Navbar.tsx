@@ -1,23 +1,16 @@
-import { Link } from "react-router-dom";
-import { Button } from "./ui/button";
+import React from 'react';
+import { Link } from 'react-router-dom';
 
-const Navbar = () => {
+const Navbar: React.FC = () => {
   return (
-    <nav className="bg-white shadow-sm">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center h-16">
-          <Link to="/" className="text-xl font-bold text-gray-900">
-            Travel Organizer
-          </Link>
-          <div className="flex items-center gap-4">
-            <Link to="/">
-              <Button variant="secondary">My Trips</Button>
-            </Link>
-          </div>
-        </div>
+    <header className="border-b bg-white">
+      <div className="container mx-auto px-4 py-3 flex items-center">
+        <Link to="/" className="text-xl font-semibold text-gray-900">
+          My Trips
+        </Link>
       </div>
-    </nav>
+    </header>
   );
 };
 
-export default Navbar; 
+export default Navbar;

@@ -1,25 +1,23 @@
-import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import TripDetails from "./pages/TripDetails";
+import NotFound from "./pages/NotFound";
 import Home from './pages/Home';
-import TripDetails from './pages/TripDetails';
-import { seedTestData } from './utils/seedData';
+import NewTrip from './pages/NewTrip';
 
-function App() {
-  useEffect(() => {
-    // Kör bara seedData om localStorage är tom
-    if (!localStorage.getItem('travel_trips')) {
-      seedTestData();
-    }
-  }, []);
+const queryClient = new QueryClient();
 
-  return (
+const App = () => (
+  <QueryClientProvider client={queryClient}>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/trip/:tripId" element={<TripDetails />} />
+        <Route path="/trips/new" element={<NewTrip />} />
+        <Route path="/trips/:id" element={<TripDetails />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
-  );
-}
+  </QueryClientProvider>
+);
 
-export default App; 
+export default App;
