@@ -1,0 +1,55 @@
+För att bygga systemet direkt från GitHub behöver du göra följande steg:
+
+1. **Klonade repositoryt**:
+```bash
+git clone https://github.com/magnusgudehn/magnus-resor.git
+cd magnus-resor
+```
+
+2. **Installera beroenden**:
+```bash
+# Installera backend-beroenden
+cd backend
+npm install
+
+# Installera frontend-beroenden
+cd ../frontend
+npm install
+```
+
+3. **Skapa miljövariabler**:
+   - Skapa en `.env` fil i backend-mappen med följande innehåll:
+```
+DATABASE_URL="file:./dev.db"
+JWT_SECRET="din_hemliga_nyckel"
+UNSPLASH_ACCESS_KEY="din_unsplash_access_key"
+```
+
+4. **Initiera databasen**:
+```bash
+cd backend
+npx prisma generate
+npx prisma db push
+```
+
+5. **Starta servern**:
+```bash
+# I backend-mappen
+npm run dev
+
+# I frontend-mappen (i ett nytt terminalfönster)
+cd frontend
+npm run dev
+```
+
+6. **Åtkomst**:
+   - Backend: http://localhost:3001
+   - Frontend: http://localhost:5173
+
+Viktiga anteckningar:
+- Du behöver skapa ett eget konto på Unsplash för att få en Access Key
+- JWT_SECRET bör vara en säker, slumpmässig sträng
+- Se till att du har Node.js installerat på din dator
+- Om du får problem med Prisma, kontrollera att du är i rätt mapp när du kör kommandona
+
+Vill du att jag skapar en mer detaljerad installationsguide eller har du några specifika frågor om något av stegen?
