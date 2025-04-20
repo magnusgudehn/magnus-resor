@@ -23,6 +23,7 @@ npm install
 DATABASE_URL="file:./dev.db"
 JWT_SECRET="din_hemliga_nyckel"
 UNSPLASH_ACCESS_KEY="din_unsplash_access_key"
+MISTRAL_API_KAY="nyckel"
 ```
 
 4. **Initiera databasen**:
