@@ -6,18 +6,18 @@ import { toast } from 'sonner';
 import { BookingType } from '../types';
 
 interface PdfTicketUploaderProps {
-  onExtractedData: (data: {
+  onDataExtracted: (data: {
     type: BookingType;
-    title: string;
     startDate: string;
-    endDate?: string;
-    location?: string;
-    description?: string;
-    confirmationNumber?: string;
+    endDate: string;
+    from: string;
+    to: string;
+    reference: string;
+    notes: string;
   }) => void;
 }
 
-const PdfTicketUploader: React.FC<PdfTicketUploaderProps> = ({ onExtractedData }) => {
+const PdfTicketUploader: React.FC<PdfTicketUploaderProps> = ({ onDataExtracted }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
 
@@ -27,7 +27,7 @@ const PdfTicketUploader: React.FC<PdfTicketUploaderProps> = ({ onExtractedData }
     
     // Only accept PDF files
     if (file.type !== 'application/pdf') {
-      toast.error('Invalid file type. Please upload a PDF file');
+      toast.error('Ogiltig filtyp. Vänligen ladda upp en PDF-fil');
       return;
     }
 
@@ -38,14 +38,14 @@ const PdfTicketUploader: React.FC<PdfTicketUploaderProps> = ({ onExtractedData }
       const formData = new FormData();
       formData.append('pdf', file);
 
-      const response = await fetch('/api/pdf/parse', {
+      const response = await fetch('http://localhost:8080/api/pdf/parse', {
         method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(errorText || 'Failed to process PDF');
+        throw new Error(errorText || 'Kunde inte bearbeta PDF-filen');
       }
 
       const data = await response.json();
@@ -76,35 +76,22 @@ const PdfTicketUploader: React.FC<PdfTicketUploaderProps> = ({ onExtractedData }
         }
       }
 
-      // Prepare description with additional details if available
-      let description = parsedData.description || '';
-      if (parsedData.from && parsedData.to) {
-        description = `${description}\nFrom: ${parsedData.from}\nTo: ${parsedData.to}`;
-      }
-      if (parsedData.airline) {
-        description = `${description}\nAirline: ${parsedData.airline}`;
-      }
-      if (parsedData.flightNumber) {
-        description = `${description}\nFlight: ${parsedData.flightNumber}`;
-      }
-      description = description.trim();
-
       // Convert the data to match the expected format
       const bookingData = {
-        type: parsedData.type as BookingType || 'other',
-        title: parsedData.title || 'Untitled Booking',
+        type: parsedData.type || 'flight',
         startDate: startDate || new Date().toISOString().split('.')[0],
-        endDate: endDate || undefined,
-        location: parsedData.location || parsedData.from && parsedData.to ? `${parsedData.from} - ${parsedData.to}` : undefined,
-        description: description || undefined,
-        confirmationNumber: parsedData.confirmationNumber || undefined,
+        endDate: endDate || new Date().toISOString().split('.')[0],
+        from: parsedData.from || '',
+        to: parsedData.to || '',
+        reference: parsedData.confirmationNumber || '',
+        notes: parsedData.description || ''
       };
 
-      toast.success('PDF processed successfully');
-      onExtractedData(bookingData);
+      toast.success('PDF bearbetad');
+      onDataExtracted(bookingData);
     } catch (error) {
       console.error('Error processing PDF:', error);
-      toast.error('Failed to process the PDF file');
+      toast.error('Kunde inte bearbeta PDF-filen');
     } finally {
       setIsLoading(false);
     }
@@ -114,7 +101,7 @@ const PdfTicketUploader: React.FC<PdfTicketUploaderProps> = ({ onExtractedData }
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <FileText className="h-5 w-5 text-blue-500" />
-        <Label htmlFor="pdf-upload" className="font-medium">Upload PDF Ticket</Label>
+        <Label htmlFor="pdf-upload" className="font-medium">Ladda upp PDF-biljett</Label>
       </div>
       
       <div className="border-2 border-dashed border-gray-300 rounded-md p-6 flex flex-col items-center justify-center bg-white">
@@ -125,7 +112,7 @@ const PdfTicketUploader: React.FC<PdfTicketUploaderProps> = ({ onExtractedData }
             {isLoading && (
               <div className="flex items-center justify-center mt-2">
                 <Loader className="h-5 w-5 text-blue-500 animate-spin mr-2" />
-                <span className="text-sm text-gray-500">Processing PDF...</span>
+                <span className="text-sm text-gray-500">Bearbetar PDF...</span>
               </div>
             )}
           </div>
@@ -133,10 +120,10 @@ const PdfTicketUploader: React.FC<PdfTicketUploaderProps> = ({ onExtractedData }
           <>
             <Upload className="h-10 w-10 text-gray-400 mb-2" />
             <p className="text-sm text-gray-600 mb-2">
-              Drag and drop your PDF ticket, or click to browse
+              Dra och släpp din PDF-biljett, eller klicka för att bläddra
             </p>
             <p className="text-xs text-gray-500">
-              We'll extract booking details automatically
+              Vi extraherar bokningsdetaljerna automatiskt
             </p>
           </>
         )}
@@ -157,7 +144,7 @@ const PdfTicketUploader: React.FC<PdfTicketUploaderProps> = ({ onExtractedData }
             onClick={() => document.getElementById('pdf-upload')?.click()}
             disabled={isLoading}
           >
-            Select PDF
+            Välj PDF
           </Button>
         )}
         
@@ -171,7 +158,7 @@ const PdfTicketUploader: React.FC<PdfTicketUploaderProps> = ({ onExtractedData }
               if (input) input.value = '';
             }}
           >
-            Upload Another PDF
+            Ladda upp en annan PDF
           </Button>
         )}
       </div>

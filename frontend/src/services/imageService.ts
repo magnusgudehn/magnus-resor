@@ -10,31 +10,48 @@ interface CachedImage {
 export const imageService = {
   async getDestinationImage(destination: string): Promise<string> {
     try {
-      // Kolla cache först
-      const cached = this.getCachedImage(destination);
-      if (cached) return cached;
+      console.log('Hämtar bild för destination:', destination);
+      
+      // Kontrollera cache först
+      const cachedImage = this.getCachedImage(destination);
+      if (cachedImage) {
+        console.log('Använder cachad bild');
+        return cachedImage;
+      }
 
+      console.log('Gör API-anrop till Unsplash');
       const response = await fetch(
-        `https://api.unsplash.com/search/photos?query=${destination}&client_id=${UNSPLASH_ACCESS_KEY}&orientation=landscape&per_page=1`
+        `https://api.unsplash.com/search/photos?query=${encodeURIComponent(destination)}&per_page=1`,
+        {
+          headers: {
+            'Authorization': `Client-ID ${UNSPLASH_ACCESS_KEY}`,
+          },
+        }
       );
+
+      console.log('API-svar:', response.status, response.statusText);
       
       if (!response.ok) {
-        throw new Error('Failed to fetch image');
+        if (response.status === 401) {
+          throw new Error('Ogiltig Unsplash API-nyckel. Kontrollera din nyckel.');
+        }
+        throw new Error(`Kunde inte hämta bild från Unsplash: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
-      const imageUrl = data.results[0]?.urls.regular;
+      console.log('API-data:', data);
       
-      if (imageUrl) {
-        // Spara i cache
-        this.cacheImage(destination, imageUrl);
-        return imageUrl;
+      const imageUrl = data.results[0]?.urls?.regular;
+      if (!imageUrl) {
+        throw new Error('Ingen bild hittades för denna destination');
       }
 
-      return '/default-trip.jpg';
+      // Spara i cache
+      this.cacheImage(destination, imageUrl);
+      return imageUrl;
     } catch (error) {
-      console.error('Error fetching destination image:', error);
-      return '/default-trip.jpg';
+      console.error('Fel vid hämtning av bild:', error);
+      return '/placeholder-image.jpg';
     }
   },
 
